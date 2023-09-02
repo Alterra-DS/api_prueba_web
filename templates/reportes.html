@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes Alterra</title>
+</head>
+<body>
+    <h2>Respuesta:</h2>
+    {% if response['Error'] %}
+        <p>{{ response }}</p>
+    {% else %}
+        {% for item in response %}
+            <p>{{ item }}</p>
+            <hr>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Reportes Alterra</title>
+<style>
+    /* Añadir estilos para el texto y la línea horizontal */
+    #serverResponse p {
+    font-size: 1em;
+    }
+    #serverResponse hr {
+    border: 1px solid #ccc;
+    }
+</style>
+</head>
+<body>
+<h3>Reporte 12A Total</h3>
+<div class="pagination" id="pagination">
+    <!-- Botones de paginación se añadirán aquí -->
+</div>
+<div id="serverResponse">
+    <!-- Respuesta del servidor se mostrará aquí -->
+</div>
+<script>
+    // Variables globales
+    var ws = null;
+    var initialized = false;
+    var initialMessage = '';
+    var totalPages = 0;
+    var serverResponse = '';
+
+    // Inicialización de WebSocket
+    function initializeWebSocket() {
+    ws = new WebSocket('wss://alterra-reportes-api.azurewebsites.net/reporte12_total/?access_token={{ token_obtenido }}');
+
+    ws.addEventListener('open', function(event) {
+        console.log('Conectado al servidor WebSocket');
+    });
+
+    ws.addEventListener('message', function(event) {
+        if (!initialized) {
+        initialMessage = event.data;
+        initialized = true;
+        setupInitialData();
+        } else {
+        serverResponse = JSON.parse(event.data);
+        displayServerResponse();
+        }
+    });
+
+    ws.addEventListener('close', function(event) {
+        console.log('Desconectado del servidor WebSocket');
+    });
+    }
+
+    // Configuración de datos iniciales
+    function setupInitialData() {
+    var parsedMessage = JSON.parse(initialMessage);
+    totalPages = parseInt(parsedMessage.pages);
+    setupPaginationButtons();
+    }
+
+    // Configuración de botones de paginación
+    function setupPaginationButtons() {
+    var paginationDiv = document.getElementById('pagination');
+    paginationDiv.innerHTML = '';
+    for (var i = 1; i <= totalPages; i++) {
+        var button = document.createElement('button');
+        button.innerHTML = i;
+        button.addEventListener('click', function(event) {
+        goToPage(event.target.innerHTML);
+        });
+        paginationDiv.appendChild(button);
+    }
+    }
+
+    // Ir a la página seleccionada
+    function goToPage(page) {
+    var paginaSeleccionado = page.toString();
+    console.log("Pagina seleccionado: " + paginaSeleccionado);
+    if (ws) {
+        ws.send(paginaSeleccionado);
+    }
+    }
+
+    // Mostrar la respuesta del servidor
+    function displayServerResponse() {
+        var serverResponseDiv = document.getElementById('serverResponse');
+        serverResponseDiv.innerHTML = '';
+        if (Array.isArray(serverResponse)) {
+            serverResponse.forEach(function(item, index) {
+            var div = document.createElement('div');
+            var p = document.createElement('p');
+            var hr = document.createElement('hr');
+            p.innerHTML = JSON.stringify(item);
+            div.appendChild(p);
+            div.appendChild(hr); // Añadir una línea horizontal
+            serverResponseDiv.appendChild(div);
+            });
+        } else {
+            var p = document.createElement('p');
+            p.innerHTML = "Respuesta del servidor: " + JSON.stringify(serverResponse);
+            serverResponseDiv.appendChild(p);
+        }
+        }
+
+    // Inicializar WebSocket al cargar la página
+    window.onload = function() {
+    initializeWebSocket();
+    }
+</script>
+</body>
+</html>
